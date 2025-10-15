@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Global Search Prototype</title>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f4f7fa;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        transition: background-color 0.3s;
+    }
+    .container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: auto;
+    }
+    header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    .back-button {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        margin-right: 15px;
+        color: #555;
+        font-weight: bold;
+    }
+    .search-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    #searchInput {
+        width: 100%;
+        padding: 16px 20px 16px 50px;
+        border-radius: 30px;
+        border: 1px solid #dfe1e5;
+        font-size: 18px;
+        box-sizing: border-box;
+        transition: box-shadow 0.2s;
+    }
+    #searchInput:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        border-color: #4f46e5;
+    }
+    .search-wrapper::before {
+        content: '🔍';
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: #999;
+    }
+    
+    /* Dashboard View */
+    #dashboardView { text-align: center; padding-top: 50px; }
+    #dashboardView h1 { font-size: 28px; color: #333; }
+    #dashboardView .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 40px;
+        text-align: left;
+    }
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .card h3 { margin-top: 0; font-size: 16px; color: #555; }
+    .placeholder-content {
+        background-color: #f0f3f6;
+        border-radius: 4px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        font-size: 14px;
+    }
+
+    /* Search Results View */
+    #searchResultsView { display: none; }
+    .tabs {
+        display: flex;
+        flex-wrap: wrap;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+    .tab-link {
+        padding: 12px 20px;
+        cursor: pointer;
+        border: none;
+        background-color: transparent;
+        font-size: 16px;
+        margin-right: 10px;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s ease;
+        color: #555;
+    }
+    .tab-link.active {
+        border-bottom-color: #4f46e5;
+        font-weight: 600;
+        color: #4f46e5;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #f0f3f6;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        color: #666;
+    }
+    tr { transition: background-color 0.2s; }
+    tr:hover { background-color: #f8f9fa; }
+    tr:last-child td { border-bottom: none; }
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    .action-button {
+        background-color: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .action-button:hover { background-color: #4338ca; }
+    .nav-button { background-color: #10b981; }
+    .nav-button:hover { background-color: #059669; }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 25px 30px;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .modal-header h2 { margin: 0; color: #333; }
+    .close-button {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .modal-body p { margin: 12px 0; line-height: 1.6; }
+    .modal-body p strong { color: #555; min-width: 120px; display: inline-block; }
+    .modal-body ul { list-style: none; padding-left: 0; }
+    .modal-body li { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 5px; }
+    
+    @keyframes slideIn { from {transform: translateY(-50px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboardView">
+        <h1>MeraMonitor Dashboard</h1>
+        <header>
+            <div class="search-wrapper">
+                <form id="searchForm">
+                    <input type="text" id="searchInput" placeholder="Search for users, projects, apps, reports...">
+                </form>
+            </div>
+        </header>
+        <div class="dashboard-grid">
+            <div class="card"><h3>Live Tracking</h3><div class="placeholder-content">Map View</div></div>
+            <div class="card"><h3>Productivity vs Unproductive</h3><div class="placeholder-content">Graph</div></div>
+            <div class="card"><h3>Web And Apps Usage</h3><div class="placeholder-content">List</div></div>
+            <div class="card"><h3>Attendance Overview</h3><div class="placeholder-content">Bar Chart</div></div>
+        </div>
+    </div>
+
+    <!-- SEARCH RESULTS VIEW -->
+    <div id="searchResultsView">
+        <header>
+            <button class="back-button" onclick="showDashboard()">←</button>
+            <h2>Search Results</h2>
+        </header>
+        <div class="tabs">
+            <button class="tab-link" onclick="openTab(event, 'users')">Users & Teams</button>
+            <button class="tab-link" onclick="openTab(event, 'projects')">Projects & Tasks</button>
+            <button class="tab-link" onclick="openTab(event, 'apps')">Applications & Websites</button>
+            <button class="tab-link" onclick="openTab(event, 'reports')">Reports & Analytics</button>
+            <button class="tab-link" onclick="openTab(event, 'settings')">Settings & Configuration</button>
+        </div>
+
+        <div id="users" class="tab-content"><table></table></div>
+        <div id="projects" class="tab-content"><table></table></div>
+        <div id="apps" class="tab-content"><table></table></div>
+        <div id="reports" class="tab-content"><table></table></div>
+        <div id="settings" class="tab-content"><table></table></div>
+    </div>
+</div>
+
+<!-- MODAL FOR DETAILS -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle"></h2>
+            <span class="close-button" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    const sampleData = {
+        users: [
+            { id: 1, name: 'Manish Gupta', type: 'User', context: 'Development Team', details: { Role: 'Team Lead', Email: 'manish.g@example.com', LastLogin: '2025-10-15 08:30 AM', Activity: ['Logged in', 'Viewed Project Alpha Report', 'Commented on task "Fix login bug"'] }},
+            { id: 2, name: 'Development Team', type: 'Team', context: '5 Members', details: { Manager: 'Manish Gupta', ActiveProjects: '3', RecentActivity: 'Completed "Project Alpha" sprint' }},
+        ],
+        projects: [
+            { id: 1, name: 'Project Alpha', type: 'Project', context: 'Status: In Progress', details: { DueDate: '2025-12-31', Lead: 'Manish Gupta', Tasks: ['Design new UI', 'Develop login module', 'Setup testing environment'] }},
+            { id: 2, name: 'Fix login bug', type: 'Task', context: 'Assigned to: Vikram Singh', details: { Project: 'Project Alpha', Status: 'Overdue', Priority: 'High', Description: 'Users are unable to login using SSO.' }},
+        ],
+        apps: [
+            { id: 1, name: 'Google Chrome', type: 'Application', context: 'Productive', details: { TopUser: 'Anjali Sharma (15h/week)', TotalTime: '120 hours this week', Category: 'Browser' }},
+            { id: 2, name: 'github.com', type: 'Website', context: 'Productive', details: { TopUser: 'Manish Gupta (10h/week)', TotalTime: '85 hours this week', Category: 'Development Tools' }},
+        ],
+        reports: [
+            { id: 1, name: 'Weekly Productivity Report', type: 'Productivity', context: 'Generated: Oct 13, 2025', details: { GeneratedBy: 'Manish Gupta', DateRange: 'Oct 6 - Oct 12', KeyInsight: 'Team productivity increased by 5%' }},
+            { id: 2, name: 'Chrome Usage Analysis', type: 'Application Usage', context: 'Generated: Oct 12, 2025', details: { GeneratedBy: 'Anjali Sharma', DateRange: 'September 2025', KeyInsight: 'Chrome is the most used application' }},
+        ],
+        settings: [
+            { id: 1, name: 'Pricing and Billing', type: 'Configuration', context: 'Manage your subscription', details: { Page: 'Billing', Description: 'View invoices, update payment methods, and change your current plan.', Action: 'Go to Billing Page' }},
+            { id: 2, name: 'Holiday Calendar', type: 'Configuration', context: 'Manage company holidays', details: { Page: 'Holidays', Description: 'Add or remove regional and company-wide holidays for attendance tracking.', Action: 'Open Calendar' }},
+        ]
+    };
+
+    const dashboardView = document.getElementById('dashboardView');
+    const searchResultsView = document.getElementById('searchResultsView');
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const modal = document.getElementById('detailsModal');
+
+    // Event Listeners
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (query) {
+            showSearchResults(query);
+        }
+    });
+
+    // Main Functions
+    function showDashboard() {
+        searchResultsView.style.display = 'none';
+        dashboardView.style.display = 'block';
+    }
+
+    function showSearchResults(query) {
+        dashboardView.style.display = 'none';
+        searchResultsView.style.display = 'block';
+        filterAndDisplayResults(query);
+    }
+
+    function filterAndDisplayResults(query) {
+        const lowerCaseQuery = query.toLowerCase();
+        let firstTabWithResults = '';
+
+        Object.keys(sampleData).forEach(category => {
+            const data = sampleData[category];
+            const filteredData = data.filter(item => 
+                Object.values(item).some(val => String(val).toLowerCase().includes(lowerCaseQuery))
+            );
+            populateTable(category, filteredData);
+            if (filteredData.length > 0 && !firstTabWithResults) {
+                firstTabWithResults = category;
+            }
+        });
+        
+        if (firstTabWithResults) {
+            openTab(null, firstTabWithResults, true);
+        } else {
+             openTab(null, 'users', true); // Default to users tab if no results
+        }
+    }
+
+    function populateTable(category, data) {
+        const table = document.querySelector(`#${category} table`);
+        const headers = ['Name', 'Type', 'Context', 'Action'];
+        let html = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+
+        if (data.length === 0) {
+            html += `<tr><td colspan="${headers.length}" class="no-results">No results found in this category.</td></tr>`;
+        } else {
+            data.forEach(item => {
+                const isSetting = category === 'settings';
+                const buttonClass = isSetting ? 'action-button nav-button' : 'action-button';
+                const buttonText = isSetting ? 'Navigate' : 'View Details';
+                html += `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.type}</td>
+                    <td>${item.context}</td>
+                    <td><button class="${buttonClass}" onclick="showDetailsModal('${category}', ${item.id})">${buttonText}</button></td>
+                </tr>`;
+            });
+        }
+        html += `</tbody>`;
+        table.innerHTML = html;
+    }
+
+    function openTab(evt, tabName, force = false) {
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        
+        const targetTabLink = document.querySelector(`.tab-link[onclick*="'${tabName}'"]`);
+        if (targetTabLink) {
+            targetTabLink.classList.add('active');
+        }
+    }
+
+    function showDetailsModal(category, id) {
+        const item = sampleData[category].find(d => d.id === id);
+        if (!item) return;
+
+        document.getElementById('modalTitle').innerText = item.name;
+        const modalBody = document.getElementById('modalBody');
+        let bodyHtml = '';
+
+        for (const [key, value] of Object.entries(item.details)) {
+            if (Array.isArray(value)) {
+                bodyHtml += `<p><strong>${key}:</strong></p><ul>${value.map(v => `<li>${v}</li>`).join('')}</ul>`;
+            } else {
+                 bodyHtml += `<p><strong>${key}:</strong> ${value}</p>`;
+            }
+        }
+        modalBody.innerHTML = bodyHtml;
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
+
+</body>
+</html>
