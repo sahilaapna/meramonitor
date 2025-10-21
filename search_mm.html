@@ -20,13 +20,26 @@
 
     <div id="app-container" style="max-width: 1200px; margin: auto; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e9ecef; padding: 24px;">
 
+        <!-- Guidance Note -->
+        <div id="guidance-note" style="background-color: #f1f3f5; padding: 12px 16px; border-radius: 6px; margin-bottom: 24px; font-size: 14px; color: #495057;">
+            <strong>How to use:</strong> Select a filter, then type an application or website name in the search bar. Click on a suggestion to see the report.
+        </div>
+
         <!-- Header Controls -->
         <div id="controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
-            <div style="position: relative;">
-                <input type="search" id="app-search" placeholder="Search Application or Website" style="padding: 10px 10px 10px 35px; border-radius: 6px; border: 1px solid #ced4da; font-size: 14px; min-width: 250px;">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="position: absolute; left: 12px; top: 12px; color: #6c757d;" viewBox="0 0 16 16">
-                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                </svg>
+             <div style="display: flex; align-items: center; gap: 8px; position: relative;">
+                <select id="app-type-filter" style="padding: 10px; border-radius: 6px; border: 1px solid #ced4da; font-size: 14px; background-color: #f8f9fa;">
+                    <option value="website" selected>Website</option>
+                    <option value="application">Application</option>
+                </select>
+                <div style="position: relative;">
+                    <input type="search" id="app-search" placeholder="Search Application or Website" style="padding: 10px 10px 10px 35px; border-radius: 6px; border: 1px solid #ced4da; font-size: 14px; min-width: 250px;" autocomplete="off">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="position: absolute; left: 12px; top: 12px; color: #6c757d;" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                    <!-- Suggestions Box -->
+                    <div id="suggestions-box" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ced4da; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10; max-height: 200px; overflow-y: auto; margin-top: 4px;"></div>
+                </div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
                 <input type="date" id="start-date" style="padding: 10px; border-radius: 6px; border: 1px solid #ced4da; font-size: 14px;">
@@ -57,18 +70,35 @@
 
     <script>
         // --- DUMMY DATA ---
-        // In a real application, this data would come from a server.
         const usageData = [
-            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-14T09:05:00', endTime: '2025-10-14T11:30:00', category: 'Productivity' },
-            { user: 'Rohan Joshi', app: 'https://app.clickup.com', startTime: '2025-10-14T10:15:00', endTime: '2025-10-14T12:00:00', category: 'Productivity' },
-            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-14T14:00:00', endTime: '2025-10-14T15:45:10', category: 'Productivity' },
-            { user: 'Ananya Rao', app: 'Adobe Photoshop', startTime: '2025-10-14T11:00:00', endTime: '2025-10-14T13:20:30', category: 'Design' },
-            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-15T09:30:00', endTime: '2025-10-15T12:10:25', category: 'Productivity' },
-            { user: 'Rohan Joshi', app: 'VS Code', startTime: '2025-10-15T09:00:00', endTime: '2025-10-15T17:00:00', category: 'Development' },
-            { user: 'Ananya Rao', app: 'https://app.clickup.com', startTime: '2025-10-15T14:00:00', endTime: '2025-10-15T16:30:00', category: 'Productivity' },
-            { user: 'Priya Sharma', app: 'Slack', startTime: '2025-10-16T10:00:00', endTime: '2025-10-16T10:15:00', category: 'Communication' },
-            { user: 'Rohan Joshi', app: 'https://app.clickup.com', startTime: '2025-10-16T11:00:00', endTime: '2025-10-16T11:45:55', category: 'Productivity' },
+            // ClickUp - Productive
+            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-14T09:05:00', endTime: '2025-10-14T11:30:00', category: 'Productive' },
+            { user: 'Rohan Joshi', app: 'https://app.clickup.com', startTime: '2025-10-14T10:15:00', endTime: '2025-10-14T12:00:00', category: 'Productive' },
+            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-14T14:00:00', endTime: '2025-10-14T15:45:10', category: 'Productive' },
+            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-15T09:30:00', endTime: '2025-10-15T12:10:25', category: 'Productive' },
+            { user: 'Ananya Rao', app: 'https://app.clickup.com', startTime: '2025-10-15T14:00:00', endTime: '2025-10-15T16:30:00', category: 'Productive' },
+            { user: 'Rohan Joshi', app: 'https://app.clickup.com', startTime: '2025-10-16T11:00:00', endTime: '2025-10-16T11:45:55', category: 'Productive' },
+            { user: 'Priya Sharma', app: 'https://app.clickup.com', startTime: '2025-10-17T10:00:00', endTime: '2025-10-17T12:30:00', category: 'Productive' },
+            { user: 'Rohan Joshi', app: 'https://app.clickup.com', startTime: '2025-10-18T14:00:00', endTime: '2025-10-18T15:00:00', category: 'Productive' },
+
+            // Design & Dev - Productive
+            { user: 'Ananya Rao', app: 'Adobe Photoshop', startTime: '2025-10-14T11:00:00', endTime: '2025-10-14T13:20:30', category: 'Productive' },
+            { user: 'Rohan Joshi', app: 'VS Code', startTime: '2025-10-15T09:00:00', endTime: '2025-10-15T17:00:00', category: 'Productive' },
+            { user: 'Ananya Rao', app: 'Figma', startTime: '2025-10-17T09:00:00', endTime: '2025-10-17T11:00:00', category: 'Productive' },
+
+
+            // Communication - Neutral
+            { user: 'Priya Sharma', app: 'Slack', startTime: '2025-10-16T10:00:00', endTime: '2025-10-16T10:45:00', category: 'Neutral' },
+            { user: 'Rohan Joshi', app: 'Gmail', startTime: '2025-10-16T10:00:00', endTime: '2025-10-16T10:15:00', category: 'Neutral' },
+            { user: 'Ananya Rao', app: 'Slack', startTime: '2025-10-18T11:00:00', endTime: '2025-10-18T11:30:00', category: 'Neutral' },
+
+            // Social Media - Unproductive
+            { user: 'Rohan Joshi', app: 'youtube.com', startTime: '2025-10-15T13:00:00', endTime: '2025-10-15T13:45:00', category: 'Unproductive' },
+            { user: 'Ananya Rao', app: 'youtube.com', startTime: '2025-10-16T12:00:00', endTime: '2025-10-16T12:30:00', category: 'Unproductive' },
+            { user: 'Priya Sharma', app: 'facebook.com', startTime: '2025-10-17T15:00:00', endTime: '2025-10-17T15:25:00', category: 'Unproductive' }
         ];
+
+        let uniqueApps = [];
 
         // --- UTILITY FUNCTIONS ---
         function formatDuration(seconds) {
@@ -78,6 +108,75 @@
             const s = Math.floor(seconds % 60);
             return `${h}hrs ${m}min ${s}sec`;
         }
+
+        function isWebsite(appName) {
+            return appName.startsWith('http') || appName.includes('.com');
+        }
+
+        // --- SEARCH SUGGESTIONS LOGIC ---
+        const searchInput = document.getElementById('app-search');
+        const suggestionsBox = document.getElementById('suggestions-box');
+        const filterDropdown = document.getElementById('app-type-filter');
+
+        function generateUniqueApps() {
+            const allApps = usageData.map(item => item.app);
+            uniqueApps = [...new Set(allApps)].sort();
+        }
+
+        function updateSuggestions() {
+            const query = searchInput.value.toLowerCase();
+            const filter = filterDropdown.value;
+            suggestionsBox.innerHTML = '';
+
+            if (!query) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            // 1. Filter by dropdown selection
+            let typeFilteredApps;
+            if (filter === 'application') {
+                typeFilteredApps = uniqueApps.filter(app => !isWebsite(app));
+            } else { // 'website' is the other option
+                typeFilteredApps = uniqueApps.filter(app => isWebsite(app));
+            }
+            
+            // 2. Filter by search query
+            const queryFilteredApps = typeFilteredApps.filter(app => app.toLowerCase().includes(query));
+
+            if (queryFilteredApps.length > 0) {
+                queryFilteredApps.forEach(app => {
+                    const suggestionItem = document.createElement('div');
+                    suggestionItem.textContent = app;
+                    suggestionItem.style.padding = '10px';
+                    suggestionItem.style.cursor = 'pointer';
+                    suggestionItem.onmouseover = () => suggestionItem.style.backgroundColor = '#f1f3f5';
+                    suggestionItem.onmouseout = () => suggestionItem.style.backgroundColor = 'white';
+
+                    suggestionItem.addEventListener('click', () => {
+                        searchInput.value = app;
+                        suggestionsBox.style.display = 'none';
+                        document.getElementById('search-btn').click();
+                    });
+
+                    suggestionsBox.appendChild(suggestionItem);
+                });
+                suggestionsBox.style.display = 'block';
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+        }
+        
+        searchInput.addEventListener('input', updateSuggestions);
+        filterDropdown.addEventListener('change', updateSuggestions);
+
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
         
         // --- CORE LOGIC ---
         document.getElementById('search-btn').addEventListener('click', function() {
@@ -95,15 +194,13 @@
                 return;
             }
 
-            // 1. Filter data based on criteria
             const filteredData = usageData.filter(item => {
                 const itemDate = new Date(item.startTime);
-                const appMatch = item.app.toLowerCase().includes(appName);
+                const appMatch = item.app.toLowerCase() === appName; 
                 const dateMatch = itemDate >= startDate && itemDate <= endDate;
                 return appMatch && dateMatch;
             });
 
-            // 2. Process and aggregate data
             const userReports = {};
             filteredData.forEach(item => {
                 const duration = (new Date(item.endTime) - new Date(item.startTime)) / 1000;
@@ -120,12 +217,11 @@
                 userReports[item.user].totalDuration += duration;
                 
                 if (!userReports[item.user].dailyUsage[dateKey]) {
-                    userReports[item.user].dailyUsage[dateKey] = 0; // Initialize total for the day
+                    userReports[item.user].dailyUsage[dateKey] = 0;
                 }
-                userReports[item.user].dailyUsage[dateKey] += duration; // Add session duration to the daily total
+                userReports[item.user].dailyUsage[dateKey] += duration;
             });
 
-            // 3. Render the report
             renderReport(userReports);
         });
 
@@ -138,13 +234,11 @@
                 return;
             }
 
-            // Sort users alphabetically
             const sortedUsers = Object.keys(userReports).sort();
 
             sortedUsers.forEach(user => {
                 const report = userReports[user];
                 
-                // Main Row
                 const mainRow = document.createElement('tr');
                 mainRow.style.borderBottom = '1px solid #e9ecef';
                 mainRow.innerHTML = `
@@ -158,25 +252,27 @@
                     </td>
                 `;
                 
-                // Details Row (initially hidden)
                 const detailsRow = document.createElement('tr');
                 detailsRow.classList.add('details-row');
                 detailsRow.style.display = 'none';
                 detailsRow.style.backgroundColor = '#f8f9fa';
 
                 let detailsHtml = '<td colspan="4" style="padding: 16px 32px;">';
-                const sortedDates = Object.keys(report.dailyUsage).sort(); // Sort dates chronologically
+                const sortedDates = Object.keys(report.dailyUsage).sort();
 
                 sortedDates.forEach(date => {
-                    // new Date(date) can be off by a day due to timezone, add timezone offset to correct it
                     const correctedDate = new Date(new Date(date).getTime() + new Date(date).getTimezoneOffset() * 60000);
-                    const formattedDate = correctedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const day = String(correctedDate.getDate()).padStart(2, '0');
+                    const month = String(correctedDate.getMonth() + 1).padStart(2, '0');
+                    const year = correctedDate.getFullYear();
+                    const formattedDate = `${day}/${month}/${year}`;
+                    
                     const dailyTotalDuration = formatDuration(report.dailyUsage[date]);
 
-                    detailsHtml += `<div style="margin-bottom: 12px; padding-left: 16px;">`;
-                    detailsHtml += `<strong style="font-weight: 600; color: #343a40;">${formattedDate}</strong>`;
-                    detailsHtml += `<div style="font-size: 13px; margin-top: 4px; color: #495057;">${dailyTotalDuration}</div>`;
-                    detailsHtml += `</div>`;
+                    detailsHtml += `<div style="padding: 4px 16px; display: flex; justify-content: space-between; align-items: center;">
+                                      <strong style="font-weight: 600; color: #343a40;">${formattedDate}</strong>
+                                      <span style="font-size: 13px; color: #495057;">${dailyTotalDuration}</span>
+                                    </div>`;
                 });
 
                 detailsHtml += '</td>';
@@ -186,7 +282,6 @@
                 reportBody.appendChild(detailsRow);
             });
 
-            // Add event listeners to new buttons
             document.querySelectorAll('.view-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const detailsRow = this.closest('tr').nextElementSibling;
@@ -202,21 +297,20 @@
             });
         }
 
-        // Set default dates and trigger a default search for a better initial view
         function initializeReport() {
+            generateUniqueApps();
             const today = new Date();
             const lastWeek = new Date();
-            lastWeek.setDate(today.getDate() - 6);
+            lastWeek.setDate(today.getDate() - 7); // Show a week's data by default
             document.getElementById('end-date').value = today.toISOString().split('T')[0];
             document.getElementById('start-date').value = lastWeek.toISOString().split('T')[0];
-            document.getElementById('app-search').value = 'https://app.clickup.com'; // Default search term
-            document.getElementById('search-btn').click(); // Trigger search
+            document.getElementById('app-search').value = 'https://app.clickup.com';
+            document.getElementById('search-btn').click();
         }
 
-        // Initialize the report on page load
         initializeReport();
 
     </script>
 
 </body>
-</html>```
+</html>
